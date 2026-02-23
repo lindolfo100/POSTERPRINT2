@@ -1,0 +1,5 @@
+{
+  "name": "PosterPrint",
+  "description": "Divida imagens ou PDFs em várias folhas A4 para impressão em tamanho real com bordas de colagem.",
+  "requestFramePermissions": []
+}
