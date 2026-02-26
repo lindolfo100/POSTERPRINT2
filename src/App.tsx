@@ -54,6 +54,7 @@ export default function App() {
   const [pdfProgress, setPdfProgress] = useState(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSilhouette, setShowSilhouette] = useState(true);
 
   useEffect(() => {
     fetchHistory();
@@ -231,27 +232,38 @@ export default function App() {
             pdf.setLineDashPattern([2, 2], 0);
             pdf.setLineWidth(0.5);
 
-            // Left overlap line
-            if (c > 0) {
-              pdf.line(settings.overlapMm, 0, settings.overlapMm, ph);
-            }
-            // Right overlap line
+            // Right overlap line (Glue guide for the next column)
             if (c < cols - 1) {
+              pdf.setDrawColor(200, 200, 200);
+              pdf.setLineDashPattern([2, 2], 0);
               pdf.line(tileW, 0, tileW, ph);
-            }
-            // Top overlap line
-            if (r > 0) {
-              pdf.line(0, settings.overlapMm, pw, settings.overlapMm);
-            }
-            // Bottom overlap line
-            if (r < rows - 1) {
-              pdf.line(0, tileH, pw, tileH);
+              
+              // Add "GLUE" label in the margin
+              pdf.setTextColor(180, 180, 180);
+              pdf.setFontSize(6);
+              for (let y = 20; y < ph; y += 40) {
+                pdf.text('COLA', tileW + 2, y, { angle: -90 });
+              }
             }
             
-            // Add small text indicator
+            // Bottom overlap line (Glue guide for the next row)
+            if (r < rows - 1) {
+              pdf.setDrawColor(200, 200, 200);
+              pdf.setLineDashPattern([2, 2], 0);
+              pdf.line(0, tileH, pw, tileH);
+
+              // Add "GLUE" label in the margin
+              pdf.setTextColor(180, 180, 180);
+              pdf.setFontSize(6);
+              for (let x = 20; x < pw; x += 40) {
+                pdf.text('COLA', x, tileH + 5);
+              }
+            }
+            
+            // Add small text indicator for page position
             pdf.setTextColor(150, 150, 150);
             pdf.setFontSize(8);
-            pdf.text(`Col ${c + 1}, Linha ${r + 1}`, 5, 5);
+            pdf.text(`Página: Col ${c + 1}, Linha ${r + 1}`, 5, 5);
           }
 
           currentPage++;
@@ -380,6 +392,19 @@ export default function App() {
             <div className="flex items-center gap-2 pt-2">
               <input
                 type="checkbox"
+                id="showSilhouette"
+                className="rounded text-indigo-600 focus:ring-indigo-500"
+                checked={showSilhouette}
+                onChange={(e) => setShowSilhouette(e.target.checked)}
+              />
+              <label htmlFor="showSilhouette" className="text-sm text-neutral-700">
+                Mostrar silhueta de referência (1.6m)
+              </label>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
                 id="cutMarks"
                 className="rounded text-indigo-600 focus:ring-indigo-500"
                 checked={settings.showCutMarks}
@@ -467,23 +492,51 @@ export default function App() {
               </button>
             </div>
             
-            <div className="flex-1 bg-white rounded-2xl border border-neutral-200 overflow-auto p-4 flex items-center justify-center relative shadow-sm">
+            <div className="flex-1 bg-white rounded-2xl border border-neutral-200 overflow-auto p-4 flex items-end justify-center relative shadow-sm">
               {gridInfo && (
-                <div 
-                  className="relative shadow-md"
-                  style={{
-                    // Scale down the preview to fit the container while maintaining aspect ratio
-                    // We'll use a CSS trick with max-width/max-height on the image
-                    // and absolutely position the grid over it.
-                  }}
-                >
-                  <img 
-                    src={imageSrc} 
-                    alt="Preview" 
-                    className="max-w-full max-h-[70vh] object-contain block"
-                    id="preview-image"
-                  />
-                  <GridOverlay gridInfo={gridInfo} />
+                <div className="flex items-end gap-8">
+                  <div 
+                    className="relative shadow-md shrink-0 transition-all duration-300"
+                    style={{
+                      height: `calc(70vh * (${targetHeightCm} / ${Math.max(160, targetHeightCm)}))`
+                    }}
+                  >
+                    <img 
+                      src={imageSrc} 
+                      alt="Preview" 
+                      className="w-full h-full object-contain block"
+                      id="preview-image"
+                    />
+                    <GridOverlay gridInfo={gridInfo} />
+                  </div>
+
+                  {showSilhouette && (
+                    <div 
+                      className="flex flex-col items-center shrink-0 transition-all duration-300"
+                      style={{
+                        height: `calc(70vh * (160 / ${Math.max(160, targetHeightCm)}))`,
+                        // If poster is taller than 160cm, we scale silhouette down relative to poster
+                        // If poster is shorter than 160cm, we need to be careful with max-h
+                      }}
+                    >
+                      <div 
+                        className="relative flex flex-col items-center"
+                        style={{
+                          height: '100%',
+                          aspectRatio: '1/3'
+                        }}
+                      >
+                        {/* Simple Human Silhouette SVG */}
+                        <svg viewBox="0 0 100 300" className="h-full text-neutral-300 fill-current">
+                          <circle cx="50" cy="30" r="25" />
+                          <path d="M20 70 h60 v100 l-15 120 h-10 l-5 -80 l-5 80 h-10 l-15 -120 z" />
+                        </svg>
+                        <div className="absolute -bottom-6 whitespace-nowrap text-[10px] font-medium text-neutral-400 uppercase tracking-wider">
+                          Referência: 1.60m
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
