@@ -382,48 +382,78 @@ export default function App() {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
-                      Largura (páginas)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="50"
-                      className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:bg-neutral-50"
-                      value={gridInfo ? gridInfo.cols : 1}
-                      disabled={!imageDim}
-                      onChange={(e) => {
-                        const cols = Math.max(1, Number(e.target.value) || 1);
-                        const w_mm = cols * tileW + settings.overlapMm;
-                        setSettings({ ...settings, targetWidthCm: w_mm / 10 });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
-                      Altura (páginas)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="50"
-                      className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:bg-neutral-50"
-                      value={gridInfo ? gridInfo.rows : 1}
-                      disabled={!imageDim}
-                      onChange={(e) => {
-                        if (!imageDim) return;
-                        const rows = Math.max(1, Number(e.target.value) || 1);
-                        const h_mm = rows * tileH + settings.overlapMm;
-                        const h_cm = h_mm / 10;
-                        const w_cm = h_cm * (imageDim.w / imageDim.h);
-                        setSettings({ ...settings, targetWidthCm: w_cm });
-                      }}
-                    />
+                <div className="space-y-3">
+                  {imageDim && (
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-500 uppercase mb-1">
+                        Formatos Padrões
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { label: 'A3 (2xA4)', cols: settings.orientation === 'portrait' ? 1 : 2, rows: settings.orientation === 'portrait' ? 2 : 1 },
+                          { label: 'A2 (4xA4)', cols: 2, rows: 2 },
+                          { label: 'A1 (8xA4)', cols: settings.orientation === 'portrait' ? 2 : 4, rows: settings.orientation === 'portrait' ? 4 : 2 },
+                          { label: 'A0 (16xA4)', cols: 4, rows: 4 },
+                        ].map((format) => (
+                          <button
+                            key={format.label}
+                            onClick={() => {
+                              // We want to force the width so it matching the requested format format.cols / format.rows
+                              // Since we preserve aspect ratio, setting cols is enough
+                              const w_mm = format.cols * tileW + settings.overlapMm;
+                              setSettings({ ...settings, targetWidthCm: w_mm / 10 });
+                            }}
+                            className="px-2 py-1 text-xs bg-white border border-neutral-300 rounded hover:bg-neutral-50 text-neutral-700"
+                          >
+                            {format.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                        Largura (páginas)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:bg-neutral-50"
+                        value={gridInfo ? gridInfo.cols : 1}
+                        disabled={!imageDim}
+                        onChange={(e) => {
+                          const cols = Math.max(1, Number(e.target.value) || 1);
+                          const w_mm = cols * tileW + settings.overlapMm;
+                          setSettings({ ...settings, targetWidthCm: w_mm / 10 });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                        Altura (páginas)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:bg-neutral-50"
+                        value={gridInfo ? gridInfo.rows : 1}
+                        disabled={!imageDim}
+                        onChange={(e) => {
+                          if (!imageDim) return;
+                          const rows = Math.max(1, Number(e.target.value) || 1);
+                          const h_mm = rows * tileH + settings.overlapMm;
+                          const h_cm = h_mm / 10;
+                          const w_cm = h_cm * (imageDim.w / imageDim.h);
+                          setSettings({ ...settings, targetWidthCm: w_cm });
+                        }}
+                      />
+                    </div>
                   </div>
                   {imageDim && (
-                    <p className="text-xs text-neutral-500 mt-1 col-span-2">
+                    <p className="text-xs text-neutral-500 col-span-2">
                       Tamanho final: {settings.targetWidthCm.toFixed(1)} x {targetHeightCm.toFixed(1)} cm
                     </p>
                   )}
